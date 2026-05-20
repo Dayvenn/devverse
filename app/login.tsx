@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://192.168.15.2:3000";
+const API_URL = "http://10.24.190.147:3000";
 
 export default function Login() {
   const router = useRouter();

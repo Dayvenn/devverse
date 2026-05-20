@@ -10,7 +10,7 @@ import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://192.168.15.2:3000";
+const API_URL = "http://10.24.190.147:3000";
 
 export default function CareerForm() {
   const router = useRouter();
