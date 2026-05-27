@@ -1,45 +1,74 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# =========================================
+# Dependencies
+# =========================================
 node_modules/
 
-# Expo
+# =========================================
+# Expo / React Native
+# =========================================
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
+# =========================================
 # Native
-.kotlin/
-*.orig.*
+# =========================================
+/ios
+/android
+
+# =========================================
+# Environment Variables
+# =========================================
+.env
+.env.*
+!.env.example
+
+# =========================================
+# Logs
+# =========================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================================
+# TypeScript
+# =========================================
+*.tsbuildinfo
+
+# =========================================
+# Prisma
+# =========================================
+/app/generated/prisma
+
+# =========================================
+# Certificates / Security
+# =========================================
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-.DS_Store
 *.pem
 
-# local env files
-.env*.local
+# =========================================
+# System Files
+# =========================================
+.DS_Store
 
-# typescript
-*.tsbuildinfo
+# =========================================
+# Temporary Files
+# =========================================
+*.orig.*
+*.tmp
+*.temp
 
-app-example
+# =========================================
+# Kotlin
+# =========================================
+.kotlin/
 
-# generated native folders
-/ios
-/android
-
-/app/generated/prisma
+# =========================================
+# Example Project
+# =========================================
+app-example/    
