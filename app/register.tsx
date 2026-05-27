@@ -8,7 +8,7 @@ import {
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
-const API_URL = "http://10.24.190.147:3000";
+const API_URL = "http://10.120.120.140:3000";
 
 export default function Register() {
   const router = useRouter();
