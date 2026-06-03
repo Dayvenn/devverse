@@ -9,8 +9,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api } from "./services/api";
 
-const API_URL = "http://10.120.120.140:3000";
+
 
 export default function CareerForm() {
   const router = useRouter();
@@ -30,78 +31,64 @@ export default function CareerForm() {
   }, []);
 
   async function loadCareer() {
-    try {
-      const userData = await AsyncStorage.getItem("user");
+  try {
+    const userData = await AsyncStorage.getItem("user");
 
-      if (!userData) return;
+    if (!userData) return;
 
-      const user = JSON.parse(userData);
+    const user = JSON.parse(userData);
 
-      const response = await fetch(
-        `${API_URL}/career/${user.id}`
-      );
+    const response = await api.get(`/career/${user.id}`);
 
-      if (response.ok) {
-        const data = await response.json();
+    const data = response.data;
 
-        if (data) {
-          setStatus(data.status || "");
-          setModalidade(data.modalidade || "");
-          setEmprego(data.emprego || "");
-          setExperiencia(data.experiencia || "");
-          setAvaliacao(data.avaliacao || "");
-          setPretensao(data.pretensao || "");
+    if (data) {
+      setStatus(data.status || "");
+      setModalidade(data.modalidade || "");
+      setEmprego(data.emprego || "");
+      setExperiencia(data.experiencia || "");
+      setAvaliacao(data.avaliacao || "");
+      setPretensao(data.pretensao || "");
 
-          setMode("view");
-        }
-      }
-    } catch {
-      console.log("Erro ao carregar currículo");
+      setMode("view");
     }
+  } catch {
+    console.log("Erro ao carregar currículo");
   }
+}
 
-  async function saveForm() {
-    try {
-      const userData = await AsyncStorage.getItem("user");
+ async function saveForm() {
+  try {
+    const userData = await AsyncStorage.getItem("user");
 
-      if (!userData) {
-        alert("Usuário não encontrado");
-        return;
-      }
+    if (!userData) {
+      alert("Usuário não encontrado");
+      return;
+    }
 
-      const user = JSON.parse(userData);
+    const user = JSON.parse(userData);
 
-      const response = await fetch(`${API_URL}/career`, {
-        method: "POST",
+    await api.post("/career", {
+      userId: user.id,
+      status,
+      modalidade,
+      emprego,
+      experiencia,
+      avaliacao,
+      pretensao,
+    });
 
-        headers: {
-          "Content-Type": "application/json",
-        },
+    alert("Currículo salvo ");
+    setMode("view");
 
-        body: JSON.stringify({
-          userId: user.id,
-          status,
-          modalidade,
-          emprego,
-          experiencia,
-          avaliacao,
-          pretensao,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Currículo salvo 🚀");
-        setMode("view");
-      } else {
-        alert(data.error || "Erro ao salvar");
-      }
-
-    } catch {
+  } catch (error: any) {
+    if (error.response) {
+      alert(error.response.data.error);
+    } else {
       alert("Erro no servidor");
     }
   }
+}
 
   // VIEW
   if (mode === "view") {

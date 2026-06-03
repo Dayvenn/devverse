@@ -5,10 +5,10 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+
 import { useRouter } from "expo-router";
 import { useState } from "react";
-
-const API_URL = "http://10.120.120.140:3000";
+import { api } from "./services/api";
 
 export default function Register() {
   const router = useRouter();
@@ -30,35 +30,26 @@ export default function Register() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: nome,
-          email: email,
-          password: senha,
-        }),
+      await api.post("/register", {
+        name: nome,
+        email,
+        password: senha,
       });
 
-      const data = await response.json();
+      alert("Conta criada com sucesso 🚀");
+      router.replace("/login");
 
-      if (response.ok) {
-        alert("Conta criada com sucesso");
-        router.replace("/login");
+    } catch (error: any) {
+      if (error.response) {
+        alert(error.response.data.error);
       } else {
-        alert(data.error || "Erro ao cadastrar");
+        alert("Erro de conexão com o servidor");
       }
-    } catch (error) {
-      alert("Erro de conexão com o servidor");
     }
   }
 
   return (
     <View style={styles.container}>
-      
-      
       <View style={styles.center}>
         <Text style={styles.title}>CRIAR CONTA</Text>
 
@@ -66,6 +57,7 @@ export default function Register() {
           placeholder="Nome"
           placeholderTextColor="#aaa"
           style={styles.input}
+          value={nome}
           onChangeText={setNome}
         />
 
@@ -73,7 +65,9 @@ export default function Register() {
           placeholder="Email"
           placeholderTextColor="#aaa"
           style={styles.input}
+          value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
         />
 
         <TextInput
@@ -81,6 +75,7 @@ export default function Register() {
           placeholderTextColor="#aaa"
           secureTextEntry
           style={styles.input}
+          value={senha}
           onChangeText={setSenha}
         />
 
@@ -89,19 +84,25 @@ export default function Register() {
           placeholderTextColor="#aaa"
           secureTextEntry
           style={styles.input}
+          value={confirmar}
           onChangeText={setConfirmar}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleRegister}
+        >
           <Text style={styles.buttonText}>CADASTRAR</Text>
         </TouchableOpacity>
 
-        <Text style={styles.login} onPress={() => router.push("/login")}>
+        <Text
+          style={styles.login}
+          onPress={() => router.push("/login")}
+        >
           Já tem conta? <Text style={styles.link}>Entrar</Text>
         </Text>
       </View>
 
-      {/* FOOTER */}
       <View style={styles.footer}>
         <Text style={styles.terms}>Termos de uso</Text>
       </View>

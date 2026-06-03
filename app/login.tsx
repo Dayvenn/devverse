@@ -1,18 +1,17 @@
 import {
-  View,
+  ActivityIndicator,
+  Image,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Image,
+  View,
 } from "react-native";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const API_URL = "http://10.120.120.140:3000";
+import { api } from "./services/api";
 
 export default function Login() {
   const router = useRouter();
@@ -40,43 +39,35 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password: senha,
-        }),
+      const response = await api.post("/login", {
+        email,
+        password: senha,
       });
 
-      const data = await response.json();
+      const data = response.data;
 
-      setLoading(false);
+      await AsyncStorage.setItem("user", JSON.stringify(data.user));
 
-      if (response.ok) {
-        await AsyncStorage.setItem("user", JSON.stringify(data.user));
+      alert(`Bem-vindo ${data.user.name} 🚀`);
 
-        alert(`Bem-vindo ${data.user.name} 🚀`);
-        router.replace("/home");
+      router.replace("/home");
+    } catch (error: any) {
+      if (error.response) {
+        alert(error.response.data.error);
       } else {
-        alert(data.error || "Erro ao fazer login");
+        alert("Erro de conexão com o servidor");
       }
-    } catch (error) {
+    } finally {
       setLoading(false);
-      alert("Erro de conexão com o servidor");
     }
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.center}>
-
-      
         <View style={styles.header}>
           <Image
-            source={require("./assets/logo.png")} 
+            source={require("./assets/logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -88,6 +79,7 @@ export default function Login() {
           placeholder="Email"
           placeholderTextColor="#aaa"
           style={styles.input}
+          value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
         />
@@ -98,13 +90,12 @@ export default function Login() {
             placeholderTextColor="#aaa"
             secureTextEntry={!showPassword}
             style={styles.passwordInput}
+            value={senha}
             onChangeText={setSenha}
           />
 
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Text style={styles.show}>
-              {showPassword ? "Ocultar" : "Ver"}
-            </Text>
+            <Text style={styles.show}>{showPassword ? "Ocultar" : "Ver"}</Text>
           </TouchableOpacity>
         </View>
 
@@ -129,7 +120,6 @@ export default function Login() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -14,20 +14,32 @@ model User {
   password  String
   createdAt DateTime @default(now())
 
-  careers   Career[]
+  careers Career[]
+  posts   Post[]
 }
 
 model Career {
-  id           String   @id @default(uuid())
-  status       String
-  modalidade   String
-  emprego      String
-  experiencia  String
-  avaliacao    String
-  pretensao    String
+  id          String   @id @default(uuid())
+  status      String
+  modalidade  String
+  emprego     String
+  experiencia String
+  avaliacao   String
+  pretensao   String
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  likes     Int      @default(0)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
 }

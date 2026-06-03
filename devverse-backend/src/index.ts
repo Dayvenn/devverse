@@ -1,109 +1,94 @@
+import { PrismaClient } from "@prisma/client";
 import express from "express";
-import cors from "cors";
 
 const app = express();
-
-app.use(cors());
 app.use(express.json());
 
-let users: any[] = [];
-let careers: any[] = [];
+const prisma = new PrismaClient();
 
-// HOME
-app.get("/", (req, res) => {
-  res.send("API rodando 🚀");
-});
+// CREATE POST
+app.post("/posts", async (req, res) => {
+  const { userId, content } = req.body;
 
+  try {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        content,
+      },
+    });
 
-// REGISTER
-app.post("/register", (req, res) => {
-  const { name, email, password } = req.body;
-
-  const exists = users.find(u => u.email === email);
-
-  if (exists) {
-    return res.status(400).json({ error: "Usuário já existe" });
+    return res.json(post);
+  } catch {
+    return res.status(500).json({
+      error: "Erro ao criar post",
+    });
   }
-
-  const user = {
-    id: String(Date.now()),
-    name,
-    email,
-    password,
-  };
-
-  users.push(user);
-
-  return res.json(user);
 });
 
+// GET POSTS
+app.get("/posts", async (req, res) => {
+  try {
+    const posts = await prisma.post.findMany({
+      include: {
+        user: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-// LOGIN
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-
-  const user = users.find(
-    u => u.email === email && u.password === password
-  );
-
-  if (!user) {
-    return res.status(400).json({ error: "Login inválido" });
+    return res.json(posts);
+  } catch {
+    return res.status(500).json({
+      error: "Erro ao buscar posts",
+    });
   }
-
-  return res.json({
-    message: "Login ok 🚀",
-    user,
-  });
 });
 
+// LIKE POST
+app.post("/posts/:id/like", async (req, res) => {
+  const { id } = req.params;
 
-// SAVE CAREER
-app.post("/career", (req, res) => {
-  const {
-    userId,
-    status,
-    modalidade,
-    emprego,
-    experiencia,
-    avaliacao,
-    pretensao,
-    uf,
-  } = req.body;
+  try {
+    const post = await prisma.post.update({
+      where: { id },
+      data: {
+        likes: {
+          increment: 1,
+        },
+      },
+    });
 
-  const index = careers.findIndex(c => c.userId === userId);
-
-  const data = {
-    userId,
-    status,
-    modalidade,
-    emprego,
-    experiencia,
-    avaliacao,
-    pretensao,
-    uf,
-  };
-
-  if (index >= 0) {
-    careers[index] = data;
-  } else {
-    careers.push(data);
+    return res.json(post);
+  } catch {
+    return res.status(500).json({
+      error: "Erro ao curtir post",
+    });
   }
-
-  return res.json(data);
 });
 
+// DELETE POST
+app.delete("/posts/:id", async (req, res) => {
+  const { id } = req.params;
 
-// GET CAREER
-app.get("/career/:userId", (req, res) => {
-  const { userId } = req.params;
+  try {
+    await prisma.post.delete({
+      where: { id },
+    });
 
-  const career = careers.find(c => c.userId === userId);
-
-  return res.json(career || null);
+    return res.json({
+      message: "Post removido",
+    });
+  } catch {
+    return res.status(500).json({
+      error: "Erro ao remover post",
+    });
+  }
 });
 
-
-// START SERVER
-app.listen(3000, "0.0.0.0", () => {
-  console.log("Servidor rodando 🚀");
+// start server
+const PORT = process.env.PORT || 3000;
+app.listen(Number(PORT), () => {
+  console.log(`Server running on port ${PORT}`);
 });
