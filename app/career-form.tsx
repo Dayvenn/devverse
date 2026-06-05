@@ -6,7 +6,6 @@ import {
 } from "react-native";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "./services/api";
@@ -14,7 +13,6 @@ import { api } from "./services/api";
 
 
 export default function CareerForm() {
-  const router = useRouter();
 
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<"form" | "view">("form");
