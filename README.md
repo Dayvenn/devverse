@@ -1,50 +1,74 @@
-# Welcome to your Expo app 👋
+# DevVerse
+Como rodar o projeto
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Primeiro, clone o repositório:
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+git clone https://github.com/Dayvenn/devverse.git
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Depois, instale as dependências na pasta principal:
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Backend
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Entre na pasta do backend:
 
-## Join the community
+```
+cd devverse-backend
+```
 
-Join our community of developers creating universal apps.
+Instale as dependências:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm install
+```
+Configuração da API
+
+Para que o frontend consiga se comunicar com o backend, é necessário alterar a URL da API para o IP no arquivo:
+
+```
+app/services/api.ts
+```
+
+Exemplo:
+
+
+ baseURL: "http://SEUIP:3000";
+
+
+### Como descobrir o IP
+
+Abra o Prompt de Comando (CMD) e execute:
+
+```bash
+ipconfig
+```
+
+Procure pelo campo Endereço IPv4 e copie.
+
+Depois, substitua na variável da API:
+
+```
+ baseURL: "http://SEUIP:3000";
+```
+
+> Obs.: O dispositivo que estiver executando o aplicativo deve estar conectado na mesma rede que a máquina onde o backend está rodando.
+
+
+Inicie o servidor dentro da pasta backend:
+
+```
+npm run dev
+```
+
+## Frontend
+
+Volte para a pasta principal do projeto e execute:
+
+```
+npx expo start
+```
