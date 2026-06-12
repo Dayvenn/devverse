@@ -1,14 +1,61 @@
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
+  ActivityIndicator,
+  Alert,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
 
-import { Ionicons } from "@expo/vector-icons";
+const API_URL = "http://192.168.101.7:3000";
 
 export default function Create() {
+  const router = useRouter();
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      const data = await AsyncStorage.getItem("user");
+      if (data) setUser(JSON.parse(data));
+    }
+    loadUser();
+  }, []);
+
+  async function handlePublish() {
+    if (!content.trim()) {
+      Alert.alert("Atenção", "Escreva algo antes de publicar!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, content: content.trim() }),
+      });
+
+      if (!response.ok) throw new Error();
+
+      setContent("");
+      Alert.alert("Publicado!", "Seu post foi publicado 🚀", [
+        { text: "OK", onPress: () => router.push("/(tabs)/home") },
+      ]);
+    } catch {
+      Alert.alert("Erro", "Não foi possível publicar. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
 
@@ -24,11 +71,13 @@ export default function Create() {
         <View style={styles.userRow}>
 
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>M</Text>
+            <Text style={styles.avatarText}>
+              {user?.name?.charAt(0).toUpperCase() ?? "?"}
+            </Text>
           </View>
 
           <Text style={styles.username}>
-            Maylon
+            {user?.name ?? "Carregando..."}
           </Text>
         </View>
 
@@ -37,20 +86,25 @@ export default function Create() {
           placeholder="Compartilhe algo..."
           placeholderTextColor="#7C8BA1"
           multiline
+          value={content}
+          onChangeText={setContent}
           style={styles.input}
         />
 
         {/* BUTTON */}
-        <TouchableOpacity style={styles.button}>
-          <Ionicons
-            name="send"
-            size={18}
-            color="#fff"
-          />
-
-          <Text style={styles.buttonText}>
-            Publicar
-          </Text>
+        <TouchableOpacity
+          style={[styles.button, loading && { opacity: 0.7 }]}
+          onPress={handlePublish}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <Ionicons name="send" size={18} color="#fff" />
+              <Text style={styles.buttonText}>Publicar</Text>
+            </>
+          )}
         </TouchableOpacity>
 
       </View>

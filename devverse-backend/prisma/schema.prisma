@@ -12,10 +12,17 @@ model User {
   name      String
   email     String   @unique
   password  String
+  bio       String?
   createdAt DateTime @default(now())
-
-  careers Career[]
-  posts   Post[]
+  cargo     String?
+  stack     String?
+  cidade    String?
+  github    String?
+  careers          Career[]
+  posts            Post[]
+  comments         Comment[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
 }
 
 model Career {
@@ -26,20 +33,37 @@ model Career {
   experiencia String
   avaliacao   String
   pretensao   String
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 model Post {
+  id        String    @id @default(uuid())
+  content   String
+  likes     Int       @default(0)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  comments  Comment[]
+}
+
+model Comment {
   id        String   @id @default(uuid())
   content   String
-  likes     Int      @default(0)
-
+  createdAt DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+}
 
-  createdAt DateTime @default(now())
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  createdAt  DateTime @default(now())
+  senderId   String
+  receiverId String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }

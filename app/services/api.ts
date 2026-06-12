@@ -1,7 +1,7 @@
-import { create } from "axios";
+import axios from "axios";
 
-export const api = create({
-  baseURL: "http://192.168.15.7:3000",
+export const api = axios.create({
+  baseURL: "http://192.168.101.7:3000",
   headers: {
     "Content-Type": "application/json",
   },

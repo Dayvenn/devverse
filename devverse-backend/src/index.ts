@@ -1,6 +1,6 @@
-import express from "express";
-import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import cors from "cors";
+import express from "express";
 
 const app = express();
 const prisma = new PrismaClient();
@@ -138,7 +138,10 @@ app.post("/posts", async (req, res) => {
 
 app.get("/posts", async (req, res) => {
   const posts = await prisma.post.findMany({
-    include: { user: true },
+    include: {
+      user: true,
+      _count: { select: { comments: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -166,6 +169,187 @@ app.delete("/posts/:id", async (req, res) => {
   });
 
   return res.json({ message: "Post removido" });
+});
+
+/* =====================
+   UPDATE USER
+===================== */
+app.put("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, bio, cargo, stack, cidade, github } = req.body;
+
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: { name, bio, cargo, stack, cidade, github },
+    });
+
+    return res.json(user);
+  } catch {
+    return res.status(500).json({ error: "Erro ao atualizar usuário" });
+  }
+});
+
+/* =====================
+   POSTS BY USER
+===================== */
+app.get("/posts/user/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const posts = await prisma.post.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.json(posts);
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar posts" });
+  }
+});
+
+/* =====================
+   CHANGE PASSWORD
+===================== */
+app.put("/users/:id/password", async (req, res) => {
+  const { id } = req.params;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+
+    if (!user || user.password !== currentPassword) {
+      return res.status(400).json({ error: "Senha atual incorreta" });
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: { password: newPassword },
+    });
+
+    return res.json({ message: "Senha alterada com sucesso" });
+  } catch {
+    return res.status(500).json({ error: "Erro ao alterar senha" });
+  }
+});
+
+/* =====================
+   USERS (para listar no chat)
+===================== */
+app.get("/users", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true },
+    });
+    return res.json(users);
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar usuários" });
+  }
+});
+
+/* =====================
+   MESSAGES
+===================== */
+app.post("/messages", async (req, res) => {
+  const { senderId, receiverId, content } = req.body;
+
+  try {
+    const message = await prisma.message.create({
+      data: { senderId, receiverId, content },
+      include: { sender: true, receiver: true },
+    });
+    return res.json(message);
+  } catch {
+    return res.status(500).json({ error: "Erro ao enviar mensagem" });
+  }
+});
+
+app.get("/messages/:userA/:userB", async (req, res) => {
+  const { userA, userB } = req.params;
+
+  try {
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: userA, receiverId: userB },
+          { senderId: userB, receiverId: userA },
+        ],
+      },
+      orderBy: { createdAt: "asc" },
+      include: { sender: true },
+    });
+    return res.json(messages);
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar mensagens" });
+  }
+});
+
+app.get("/conversations/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+      },
+      include: { sender: true, receiver: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Pega a última mensagem de cada conversa
+    const seen = new Set<string>();
+    const conversations: any[] = [];
+
+    for (const msg of messages) {
+      const otherId = msg.senderId === userId ? msg.receiverId : msg.senderId;
+      if (!seen.has(otherId)) {
+        seen.add(otherId);
+        const other = msg.senderId === userId ? msg.receiver : msg.sender;
+        conversations.push({
+          user: other,
+          lastMessage: msg.content,
+          lastAt: msg.createdAt,
+        });
+      }
+    }
+
+    return res.json(conversations);
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar conversas" });
+  }
+});
+
+/* =====================
+   COMMENTS
+===================== */
+app.post("/posts/:id/comments", async (req, res) => {
+  const { id } = req.params;
+  const { userId, content } = req.body;
+
+  try {
+    const comment = await prisma.comment.create({
+      data: { postId: id, userId, content },
+      include: { user: true },
+    });
+    return res.json(comment);
+  } catch {
+    return res.status(500).json({ error: "Erro ao comentar" });
+  }
+});
+
+app.get("/posts/:id/comments", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const comments = await prisma.comment.findMany({
+      where: { postId: id },
+      include: { user: true },
+      orderBy: { createdAt: "asc" },
+    });
+    return res.json(comments);
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar comentários" });
+  }
 });
 
 /* =====================
