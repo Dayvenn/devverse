@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 import { useEffect, useState } from "react";
-import { api } from "./services/api";
+import { api } from "../services/api";
 
 export default function CareerForm() {
   const [step, setStep] = useState(1);

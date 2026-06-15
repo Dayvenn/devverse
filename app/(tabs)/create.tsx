@@ -3,16 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
-const API_URL = "http://192.168.101.7:3000";
+import { api } from "../../services/api";
 
 export default function Create() {
   const router = useRouter();
@@ -37,17 +37,18 @@ export default function Create() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/posts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, content: content.trim() }),
+      await api.post("/posts", {
+        userId: user.id,
+        content: content.trim(),
       });
 
-      if (!response.ok) throw new Error();
-
       setContent("");
+
       Alert.alert("Publicado!", "Seu post foi publicado 🚀", [
-        { text: "OK", onPress: () => router.push("/(tabs)/home") },
+        {
+          text: "OK",
+          onPress: () => router.push("/(tabs)/home"),
+        },
       ]);
     } catch {
       Alert.alert("Erro", "Não foi possível publicar. Tente novamente.");
@@ -55,10 +56,8 @@ export default function Create() {
       setLoading(false);
     }
   }
-
   return (
     <View style={styles.container}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.title}>Criar Post</Text>
@@ -66,19 +65,15 @@ export default function Create() {
 
       {/* CARD */}
       <View style={styles.card}>
-
         {/* USER */}
         <View style={styles.userRow}>
-
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
               {user?.name?.charAt(0).toUpperCase() ?? "?"}
             </Text>
           </View>
 
-          <Text style={styles.username}>
-            {user?.name ?? "Carregando..."}
-          </Text>
+          <Text style={styles.username}>{user?.name ?? "Carregando..."}</Text>
         </View>
 
         {/* INPUT */}
@@ -106,7 +101,6 @@ export default function Create() {
             </>
           )}
         </TouchableOpacity>
-
       </View>
     </View>
   );

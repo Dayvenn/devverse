@@ -1,14 +1,14 @@
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { api } from "./services/api";
+import { api } from "../services/api";
 
 export default function Register() {
   const router = useRouter();
@@ -38,7 +38,6 @@ export default function Register() {
 
       alert("Conta criada com sucesso 🚀");
       router.replace("/login");
-
     } catch (error: any) {
       if (error.response) {
         alert(error.response.data.error);
@@ -88,17 +87,11 @@ export default function Register() {
           onChangeText={setConfirmar}
         />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleRegister}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
           <Text style={styles.buttonText}>CADASTRAR</Text>
         </TouchableOpacity>
 
-        <Text
-          style={styles.login}
-          onPress={() => router.push("/login")}
-        >
+        <Text style={styles.login} onPress={() => router.push("/login")}>
           Já tem conta? <Text style={styles.link}>Entrar</Text>
         </Text>
       </View>

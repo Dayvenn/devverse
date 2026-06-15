@@ -11,7 +11,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { api } from "./services/api";
+import { api } from "../services/api";
 
 export default function Login() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function Login() {
 
       await AsyncStorage.setItem("user", JSON.stringify(data.user));
 
-      alert(`Bem-vindo ${data.user.name} 🚀`);
+      alert(`Bem-vindo ${data.user.name} `);
 
       router.replace("/home");
     } catch (error: any) {

@@ -3,16 +3,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
-const API_URL = "http://192.168.101.7:3000";
-
+import { api } from "../../services/api";
 export default function Chat() {
   const router = useRouter();
   const [conversations, setConversations] = useState<any[]>([]);
@@ -23,27 +22,26 @@ export default function Chat() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [])
+    }, []),
   );
 
   async function loadData() {
     setLoading(true);
+
     try {
       const data = await AsyncStorage.getItem("user");
       if (!data) return;
+
       const user = JSON.parse(data);
       setCurrentUser(user);
 
       const [convRes, usersRes] = await Promise.all([
-        fetch(`${API_URL}/conversations/${user.id}`),
-        fetch(`${API_URL}/users`),
+        api.get(`/conversations/${user.id}`),
+        api.get("/users"),
       ]);
 
-      const convData = await convRes.json();
-      const usersData = await usersRes.json();
-
-      setConversations(convData);
-      setAllUsers(usersData.filter((u: any) => u.id !== user.id));
+      setConversations(convRes.data);
+      setAllUsers(usersRes.data.filter((u: any) => u.id !== user.id));
     } catch (error) {
       console.error("Erro ao carregar chats:", error);
     } finally {
@@ -67,7 +65,12 @@ export default function Chat() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color="#3B82F6" />
       </View>
     );
@@ -75,7 +78,6 @@ export default function Chat() {
 
   return (
     <View style={styles.container}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.title}>Chats</Text>
@@ -116,7 +118,11 @@ export default function Chat() {
                       <Text style={styles.user}>{user.name}</Text>
                       <Text style={styles.message}>Iniciar conversa...</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color="#3B82F6" />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color="#3B82F6"
+                    />
                   </TouchableOpacity>
                 ))}
               </>

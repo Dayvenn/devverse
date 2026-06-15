@@ -14,7 +14,7 @@ import {
     View,
 } from "react-native";
 
-const API_URL = "http://192.168.101.7:3000";
+import { api } from "../services/api";
 
 export default function Conversation() {
   const router = useRouter();
@@ -35,19 +35,19 @@ export default function Conversation() {
       loadMessages();
       const interval = setInterval(loadMessages, 3000); // atualiza a cada 3s
       return () => clearInterval(interval);
-    }, [])
+    }, []),
   );
 
   async function loadMessages() {
     try {
       const data = await AsyncStorage.getItem("user");
       if (!data) return;
+
       const user = JSON.parse(data);
       setCurrentUser(user);
 
-      const res = await fetch(`${API_URL}/messages/${user.id}/${otherId}`);
-      const msgs = await res.json();
-      setMessages(msgs);
+      const res = await api.get(`/messages/${user.id}/${otherId}`);
+      setMessages(res.data);
     } catch (error) {
       console.error("Erro ao carregar mensagens:", error);
     } finally {
@@ -59,20 +59,19 @@ export default function Conversation() {
     if (!text.trim() || !currentUser) return;
 
     setSending(true);
+
     try {
-      const res = await fetch(`${API_URL}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          senderId: currentUser.id,
-          receiverId: otherId,
-          content: text.trim(),
-        }),
+      const res = await api.post("/messages", {
+        senderId: currentUser.id,
+        receiverId: otherId,
+        content: text.trim(),
       });
 
-      const newMsg = await res.json();
+      const newMsg = res.data;
+
       setMessages((prev) => [...prev, newMsg]);
       setText("");
+
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (error) {
       console.error("Erro ao enviar:", error);
@@ -83,12 +82,20 @@ export default function Conversation() {
 
   function formatTime(dateStr: string) {
     const date = new Date(dateStr);
-    return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color="#3B82F6" />
       </View>
     );
@@ -167,7 +174,10 @@ export default function Conversation() {
         />
 
         <TouchableOpacity
-          style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}
+          style={[
+            styles.sendBtn,
+            (!text.trim() || sending) && { opacity: 0.5 },
+          ]}
           onPress={handleSend}
           disabled={!text.trim() || sending}
         >

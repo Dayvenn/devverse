@@ -12,7 +12,7 @@ app.use(express.json());
    HOME
 ===================== */
 app.get("/", (req, res) => {
-  res.send("API rodando 🚀");
+  res.json({ status: "API rodando 🚀" });
 });
 
 /* =====================
@@ -21,21 +21,24 @@ app.get("/", (req, res) => {
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "Dados inválidos" });
+  }
+
   try {
-    const exists = await prisma.user.findUnique({
-      where: { email },
-    });
+    const exists = await prisma.user.findUnique({ where: { email } });
 
     if (exists) {
       return res.status(400).json({ error: "Usuário já existe" });
     }
 
     const user = await prisma.user.create({
-      data: { name, email, password },
+      data: { name, email, password, photo: null },
     });
 
-    return res.json(user);
-  } catch {
+    return res.json({ user });
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
     return res.status(500).json({ error: "Erro ao cadastrar" });
   }
 });
@@ -46,80 +49,105 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email e senha obrigatórios" });
+  }
+
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || user.password !== password) {
       return res.status(400).json({ error: "Login inválido" });
     }
 
-    return res.json({
-      message: "Login ok 🚀",
-      user,
-    });
-  } catch {
+    return res.json({ message: "Login ok 🚀", user });
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
     return res.status(500).json({ error: "Erro no servidor" });
   }
 });
 
 /* =====================
-   CAREER (currículo)
+   USERS
 ===================== */
-app.post("/career", async (req, res) => {
-  const {
-    userId,
-    status,
-    modalidade,
-    emprego,
-    experiencia,
-    avaliacao,
-    pretensao,
-  } = req.body;
-
+app.get("/users", async (req, res) => {
   try {
-    const career = await prisma.career.upsert({
-      where: { userId },
-      update: {
-        status,
-        modalidade,
-        emprego,
-        experiencia,
-        avaliacao,
-        pretensao,
-      },
-      create: {
-        userId,
-        status,
-        modalidade,
-        emprego,
-        experiencia,
-        avaliacao,
-        pretensao,
-      },
-    });
-
-    return res.json(career);
-  } catch {
-    return res.status(500).json({ error: "Erro ao salvar currículo" });
+    const users = await prisma.user.findMany();
+    return res.json(users);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar usuários" });
   }
 });
 
 /* =====================
-   GET CAREER
+   GET USER BY ID (PERFIL)
 ===================== */
-app.get("/career/:userId", async (req, res) => {
-  const { userId } = req.params;
+app.get("/users/:id", async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+    });
+
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar usuário" });
+  }
+});
+
+/* =====================
+   UPDATE USER
+===================== */
+app.put("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, bio, cargo, stack, cidade, github, photo } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: "Nome obrigatório" });
+  }
 
   try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: { name, bio, cargo, stack, cidade, github, photo },
+    });
+
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao atualizar usuário" });
+  }
+});
+
+/* =====================
+   CAREER (CORRIGIDO)
+===================== */
+app.get("/career/:userId", async (req, res) => {
+  try {
     const career = await prisma.career.findUnique({
-      where: { userId },
+      where: { userId: req.params.userId },
     });
 
     return res.json(career);
-  } catch {
-    return res.status(500).json({ error: "Erro ao buscar currículo" });
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar carreira" });
+  }
+});
+
+app.post("/career", async (req, res) => {
+  const { userId, status, modalidade, emprego, experiencia, avaliacao, pretensao } =
+    req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: "userId obrigatório" });
+  }
+
+  try {
+    const career = await prisma.career.create({
+      data: { userId, status, modalidade, emprego, experiencia, avaliacao, pretensao },
+    });
+
+    return res.json(career);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao criar carreira" });
   }
 });
 
@@ -129,122 +157,64 @@ app.get("/career/:userId", async (req, res) => {
 app.post("/posts", async (req, res) => {
   const { userId, content } = req.body;
 
-  const post = await prisma.post.create({
-    data: { userId, content },
-  });
+  if (!userId || !content) {
+    return res.status(400).json({ error: "Dados inválidos" });
+  }
 
-  return res.json(post);
+  try {
+    const post = await prisma.post.create({
+      data: { userId, content },
+      include: { user: true },
+    });
+
+    return res.json(post);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao criar post" });
+  }
 });
 
 app.get("/posts", async (req, res) => {
-  const posts = await prisma.post.findMany({
-    include: {
-      user: true,
-      _count: { select: { comments: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const posts = await prisma.post.findMany({
+      include: { user: true, _count: { select: { comments: true } } },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return res.json(posts);
+    return res.json(posts);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar posts" });
+  }
 });
 
+/* =====================
+   LIKE / DELETE / COMMENTS
+===================== */
 app.post("/posts/:id/like", async (req, res) => {
   const { id } = req.params;
 
   const post = await prisma.post.update({
     where: { id },
-    data: {
-      likes: { increment: 1 },
-    },
+    data: { likes: { increment: 1 } },
   });
 
   return res.json(post);
 });
 
 app.delete("/posts/:id", async (req, res) => {
-  const { id } = req.params;
-
-  await prisma.post.delete({
-    where: { id },
-  });
-
+  await prisma.post.delete({ where: { id: req.params.id } });
   return res.json({ message: "Post removido" });
 });
 
-/* =====================
-   UPDATE USER
-===================== */
-app.put("/users/:id", async (req, res) => {
+app.post("/posts/:id/comments", async (req, res) => {
   const { id } = req.params;
-  const { name, bio, cargo, stack, cidade, github } = req.body;
+  const { userId, content } = req.body;
 
-  try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: { name, bio, cargo, stack, cidade, github },
-    });
+  const comment = await prisma.comment.create({
+    data: { postId: id, userId, content },
+    include: { user: true },
+  });
 
-    return res.json(user);
-  } catch {
-    return res.status(500).json({ error: "Erro ao atualizar usuário" });
-  }
-});
-
-/* =====================
-   POSTS BY USER
-===================== */
-app.get("/posts/user/:userId", async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-    const posts = await prisma.post.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return res.json(posts);
-  } catch {
-    return res.status(500).json({ error: "Erro ao buscar posts" });
-  }
-});
-
-/* =====================
-   CHANGE PASSWORD
-===================== */
-app.put("/users/:id/password", async (req, res) => {
-  const { id } = req.params;
-  const { currentPassword, newPassword } = req.body;
-
-  try {
-    const user = await prisma.user.findUnique({ where: { id } });
-
-    if (!user || user.password !== currentPassword) {
-      return res.status(400).json({ error: "Senha atual incorreta" });
-    }
-
-    await prisma.user.update({
-      where: { id },
-      data: { password: newPassword },
-    });
-
-    return res.json({ message: "Senha alterada com sucesso" });
-  } catch {
-    return res.status(500).json({ error: "Erro ao alterar senha" });
-  }
-});
-
-/* =====================
-   USERS (para listar no chat)
-===================== */
-app.get("/users", async (req, res) => {
-  try {
-    const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true },
-    });
-    return res.json(users);
-  } catch {
-    return res.status(500).json({ error: "Erro ao buscar usuários" });
-  }
+  return res.json(comment);
 });
 
 /* =====================
@@ -253,110 +223,36 @@ app.get("/users", async (req, res) => {
 app.post("/messages", async (req, res) => {
   const { senderId, receiverId, content } = req.body;
 
-  try {
-    const message = await prisma.message.create({
-      data: { senderId, receiverId, content },
-      include: { sender: true, receiver: true },
-    });
-    return res.json(message);
-  } catch {
-    return res.status(500).json({ error: "Erro ao enviar mensagem" });
-  }
+  const message = await prisma.message.create({
+    data: { senderId, receiverId, content },
+    include: { sender: true, receiver: true },
+  });
+
+  return res.json(message);
 });
 
 app.get("/messages/:userA/:userB", async (req, res) => {
   const { userA, userB } = req.params;
 
-  try {
-    const messages = await prisma.message.findMany({
-      where: {
-        OR: [
-          { senderId: userA, receiverId: userB },
-          { senderId: userB, receiverId: userA },
-        ],
-      },
-      orderBy: { createdAt: "asc" },
-      include: { sender: true },
-    });
-    return res.json(messages);
-  } catch {
-    return res.status(500).json({ error: "Erro ao buscar mensagens" });
-  }
-});
+  const messages = await prisma.message.findMany({
+    where: {
+      OR: [
+        { senderId: userA, receiverId: userB },
+        { senderId: userB, receiverId: userA },
+      ],
+    },
+    orderBy: { createdAt: "asc" },
+    include: { sender: true },
+  });
 
-app.get("/conversations/:userId", async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-    const messages = await prisma.message.findMany({
-      where: {
-        OR: [{ senderId: userId }, { receiverId: userId }],
-      },
-      include: { sender: true, receiver: true },
-      orderBy: { createdAt: "desc" },
-    });
-
-    // Pega a última mensagem de cada conversa
-    const seen = new Set<string>();
-    const conversations: any[] = [];
-
-    for (const msg of messages) {
-      const otherId = msg.senderId === userId ? msg.receiverId : msg.senderId;
-      if (!seen.has(otherId)) {
-        seen.add(otherId);
-        const other = msg.senderId === userId ? msg.receiver : msg.sender;
-        conversations.push({
-          user: other,
-          lastMessage: msg.content,
-          lastAt: msg.createdAt,
-        });
-      }
-    }
-
-    return res.json(conversations);
-  } catch {
-    return res.status(500).json({ error: "Erro ao buscar conversas" });
-  }
+  return res.json(messages);
 });
 
 /* =====================
-   COMMENTS
+   START SERVER
 ===================== */
-app.post("/posts/:id/comments", async (req, res) => {
-  const { id } = req.params;
-  const { userId, content } = req.body;
+const PORT = Number(process.env.PORT) || 3000;
 
-  try {
-    const comment = await prisma.comment.create({
-      data: { postId: id, userId, content },
-      include: { user: true },
-    });
-    return res.json(comment);
-  } catch {
-    return res.status(500).json({ error: "Erro ao comentar" });
-  }
-});
-
-app.get("/posts/:id/comments", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const comments = await prisma.comment.findMany({
-      where: { postId: id },
-      include: { user: true },
-      orderBy: { createdAt: "asc" },
-    });
-    return res.json(comments);
-  } catch {
-    return res.status(500).json({ error: "Erro ao buscar comentários" });
-  }
-});
-
-/* =====================
-   START
-===================== */
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });

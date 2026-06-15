@@ -11,7 +11,8 @@ import {
   View,
 } from "react-native";
 
-const API_URL = "http://192.168.101.7:3000";
+import { api } from "../../services/api";
+import { useRouter } from "expo-router";
 
 const topics = [
   { label: "React Native", icon: "phone-portrait-outline" },
@@ -23,15 +24,15 @@ const topics = [
 ];
 
 export default function Explore() {
+  const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
 
-  const [filter, setFilter] = useState<
-    "all" | "posts" | "users"
-  >("all");
+  const [filter, setFilter] = useState<"all" | "posts" | "users">("all");
 
   useEffect(() => {
     if (search.trim().length < 3) return;
@@ -52,8 +53,8 @@ export default function Explore() {
     setSearched(true);
 
     try {
-      const response = await fetch(`${API_URL}/posts`);
-      const data = await response.json();
+      const response = await api.get("/posts");
+      const data = response.data;
 
       const filtered = data.filter((post: any) => {
         const contentMatch = post.content
@@ -99,7 +100,6 @@ export default function Explore() {
     if (diff < 1) return "Agora mesmo";
     if (diff < 60) return `${diff}min atrás`;
     if (diff < 1440) return `${Math.floor(diff / 60)}h atrás`;
-
     return `${Math.floor(diff / 1440)}d atrás`;
   }
 
@@ -107,12 +107,9 @@ export default function Explore() {
     <View style={styles.container}>
       <Text style={styles.title}>Explorar</Text>
 
+      {/* SEARCH */}
       <View style={styles.searchContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color="#7C8BA1"
-        />
+        <Ionicons name="search" size={20} color="#7C8BA1" />
 
         <TextInput
           placeholder="Buscar posts ou devs..."
@@ -120,118 +117,58 @@ export default function Explore() {
           style={styles.input}
           value={search}
           onChangeText={setSearch}
-          returnKeyType="search"
         />
 
         {search.length > 0 && (
           <TouchableOpacity onPress={handleClear}>
-            <Ionicons
-              name="close-circle"
-              size={20}
-              color="#7C8BA1"
-            />
+            <Ionicons name="close-circle" size={20} color="#7C8BA1" />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* FILTROS */}
-
+      {/* FILTERS */}
       <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "all" && styles.filterActive,
-          ]}
-          onPress={() => setFilter("all")}
-        >
-          <Text
+        {["all", "posts", "users"].map((f) => (
+          <TouchableOpacity
+            key={f}
             style={[
-              styles.filterText,
-              filter === "all" &&
-                styles.filterTextActive,
+              styles.filterButton,
+              filter === f && styles.filterActive,
             ]}
+            onPress={() => setFilter(f as any)}
           >
-            Todos
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "posts" && styles.filterActive,
-          ]}
-          onPress={() => setFilter("posts")}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              filter === "posts" &&
-                styles.filterTextActive,
-            ]}
-          >
-            Posts
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "users" && styles.filterActive,
-          ]}
-          onPress={() => setFilter("users")}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              filter === "users" &&
-                styles.filterTextActive,
-            ]}
-          >
-            Usuários
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.filterText,
+                filter === f && styles.filterTextActive,
+              ]}
+            >
+              {f === "all" ? "Todos" : f === "posts" ? "Posts" : "Usuários"}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <Text style={styles.sectionTitle}>
-        Sugestão de pesquisa
-      </Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: 10,
-          gap: 10,
-        }}
-        style={{ flexGrow: 0 }}
-      >
+      {/* TOPICS */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {topics.map((topic) => (
           <TouchableOpacity
             key={topic.label}
             style={[
               styles.tag,
-              selectedTopic === topic.label &&
-                styles.tagActive,
+              selectedTopic === topic.label && styles.tagActive,
             ]}
-            onPress={() =>
-              handleTopicPress(topic.label)
-            }
+            onPress={() => handleTopicPress(topic.label)}
           >
             <Ionicons
               name={topic.icon as any}
               size={16}
-              color={
-                selectedTopic === topic.label
-                  ? "#fff"
-                  : "#3B82F6"
-              }
+              color={selectedTopic === topic.label ? "#fff" : "#3B82F6"}
             />
-
             <Text
               style={[
                 styles.tagText,
-                selectedTopic === topic.label &&
-                  styles.tagTextActive,
+                selectedTopic === topic.label && styles.tagTextActive,
               ]}
             >
               {topic.label}
@@ -240,96 +177,36 @@ export default function Explore() {
         ))}
       </ScrollView>
 
+      {/* CONTENT */}
       {!searched ? (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            🔥 Tecnologia em Alta
-          </Text>
-
+          <Text style={styles.cardTitle}>🔥 Tecnologia em Alta</Text>
           <Text style={styles.cardText}>
-            React Native continua entre as
-            tecnologias mais pesquisadas pelos
-            desenvolvedores da comunidade.
-          </Text>
-
-          <Text style={styles.trendingText}>
-            📈 +27% de buscas esta semana
+            React Native continua em alta na comunidade dev.
           </Text>
         </View>
       ) : loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#3B82F6"
-          style={{ marginTop: 40 }}
-        />
+        <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: 100,
-          }}
-          ListHeaderComponent={
-            <View style={styles.resultHeader}>
-              <Ionicons
-                name="search"
-                size={18}
-                color="#3B82F6"
-              />
-
-              <Text style={styles.resultHeaderText}>
-                {results.length} resultado
-                {results.length !== 1 ? "s" : ""}
-                {" "}encontrado
-                {results.length !== 1 ? "s" : ""}
-              </Text>
-            </View>
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons
-                name="search-outline"
-                size={40}
-                color="#3B82F6"
-              />
-
-              <Text
-                style={{
-                  color: "#7C8BA1",
-                  fontSize: 16,
-                }}
-              >
-                Nenhum resultado encontrado
-              </Text>
-            </View>
-          }
           renderItem={({ item }) => (
             <View style={styles.resultCard}>
-              <View style={styles.userRow}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {item.user?.name
-                      ?.charAt(0)
-                      .toUpperCase() ?? "?"}
-                  </Text>
-                </View>
 
-                <View>
-                  <Text style={styles.userName}>
-                    {item.user?.name ??
-                      "Usuário"}
-                  </Text>
+              {/* 🔥 CLIQUE NO USUÁRIO */}
+              <TouchableOpacity
+                onPress={() => {
+                  if (!item.user?.id) return;
+                 router.push(`/user/${item.user.id}`);;
+                }}
+              >
+                <Text style={styles.userName}>
+                  {item.user?.name ?? "Usuário"}
+                </Text>
+              </TouchableOpacity>
 
-                  <Text style={styles.time}>
-                    {formatDate(item.createdAt)}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.resultText}>
-                {item.content}
-              </Text>
+              <Text style={styles.resultText}>{item.content}</Text>
             </View>
           )}
         />
@@ -338,6 +215,7 @@ export default function Explore() {
   );
 }
 
+/* STYLES */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -345,175 +223,91 @@ const styles = StyleSheet.create({
     paddingTop: 55,
     paddingHorizontal: 16,
   },
-
   title: {
     color: "#fff",
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 24,
+    marginBottom: 20,
   },
-
   searchContainer: {
-    backgroundColor: "#0C1B36",
-    height: 55,
-    borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    backgroundColor: "#0C1B36",
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    height: 50,
     marginBottom: 15,
   },
-
   input: {
     flex: 1,
     color: "#fff",
     marginLeft: 10,
   },
-
   filterContainer: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 15,
   },
-
   filterButton: {
+    padding: 8,
+    borderRadius: 10,
     backgroundColor: "#12284A",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
   },
-
   filterActive: {
     backgroundColor: "#3B82F6",
   },
-
   filterText: {
     color: "#3B82F6",
-    fontWeight: "600",
   },
-
   filterTextActive: {
     color: "#fff",
   },
-
-  sectionTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 14,
-  },
-
   tag: {
-    backgroundColor: "#12284A",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#12284A",
+    padding: 10,
+    borderRadius: 12,
+    marginRight: 10,
     gap: 6,
   },
-
   tagActive: {
     backgroundColor: "#3B82F6",
   },
-
   tagText: {
     color: "#3B82F6",
-    fontWeight: "600",
   },
-
   tagTextActive: {
     color: "#fff",
   },
-
   card: {
     backgroundColor: "#0C1B36",
-    borderRadius: 18,
     padding: 20,
-    marginTop: 30,
+    borderRadius: 16,
+    marginTop: 20,
   },
-
   cardTitle: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 12,
   },
-
   cardText: {
     color: "#C7D2FE",
-    lineHeight: 24,
-    fontSize: 15,
+    marginTop: 10,
   },
-
-  trendingText: {
-    color: "#60A5FA",
-    marginTop: 15,
-    fontWeight: "600",
-  },
-
-  resultHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 15,
-  },
-
-  resultHeaderText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-
   resultCard: {
     backgroundColor: "#0C1B36",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
-    elevation: 6,
-  },
-
-  userRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    padding: 15,
+    borderRadius: 12,
     marginBottom: 10,
   },
-
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#3B82F6",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-
-  avatarText: {
-    color: "#fff",
+  userName: {
+    color: "#3B82F6",
     fontWeight: "bold",
     fontSize: 16,
   },
-
-  userName: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  time: {
-    color: "#7C8BA1",
-    fontSize: 12,
-    marginTop: 2,
-  },
-
   resultText: {
     color: "#E5E7EB",
-    fontSize: 15,
-    lineHeight: 24,
-  },
-
-  emptyContainer: {
-    alignItems: "center",
-    marginTop: 60,
-    gap: 12,
+    marginTop: 5,
   },
 });

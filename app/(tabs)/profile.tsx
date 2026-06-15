@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-import { api } from "@/app/services/api";
+import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
@@ -24,17 +24,21 @@ export default function Profile() {
   const [editModal, setEditModal] = useState(false);
   const [settingsModal, setSettingsModal] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
+
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editCargo, setEditCargo] = useState("");
   const [editStack, setEditStack] = useState("");
   const [editCidade, setEditCidade] = useState("");
   const [editGithub, setEditGithub] = useState("");
+
   const [photo, setPhoto] = useState<string | null>(null);
+
   const [saving, setSaving] = useState(false);
   const [postCount, setPostCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [hasCareer, setHasCareer] = useState(0);
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -46,8 +50,14 @@ export default function Profile() {
         api.get(`/posts/user/${userId}`),
         api.get(`/career/${userId}`),
       ]);
+
       const posts = postsRes.data;
-      const totalLikes = posts.reduce((acc: number, post: any) => acc + post.likes, 0);
+
+      const totalLikes = posts.reduce(
+        (acc: number, post: any) => acc + (post.likes || 0),
+        0
+      );
+
       setPostCount(posts.length);
       setLikeCount(totalLikes);
       setHasCareer(careerRes.data ? 1 : 0);
@@ -60,40 +70,53 @@ export default function Profile() {
     useCallback(() => {
       async function load() {
         const data = await AsyncStorage.getItem("user");
-        if (data) {
-          const parsed = JSON.parse(data);
-          setUser(parsed);
-          setEditName(parsed.name || "");
-          setEditBio(parsed.bio || "");
-          setEditCargo(parsed.cargo || "");
-          setEditStack(parsed.stack || "");
-          setEditCidade(parsed.cidade || "");
-          setEditGithub(parsed.github || "");
-          setPhoto(parsed.photo || null);
-          await loadStats(parsed.id);
-        }
+        if (!data) return;
+
+        const parsed = JSON.parse(data);
+
+        setUser(parsed);
+
+        setEditName(parsed.name || "");
+        setEditBio(parsed.bio || "");
+        setEditCargo(parsed.cargo || "");
+        setEditStack(parsed.stack || "");
+        setEditCidade(parsed.cidade || "");
+        setEditGithub(parsed.github || "");
+
+        setPhoto(parsed.photo || null);
+
+        await loadStats(parsed.id);
       }
+
       load();
     }, [])
   );
 
   function getInitials(name?: string) {
     if (!name) return "U";
-    return name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+    return name
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   }
 
   async function handlePickImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (!permission.granted) {
-      Alert.alert("Permissão negada", "Precisamos de acesso à sua galeria.");
+      Alert.alert("Permissão negada");
       return;
     }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
     });
+
     if (!result.canceled) {
       setPhoto(result.assets[0].uri);
     }
@@ -101,19 +124,13 @@ export default function Profile() {
 
   async function handleSaveProfile() {
     if (!editName.trim()) {
-      Alert.alert("Atenção", "O nome não pode estar vazio!");
+      Alert.alert("Nome obrigatório");
       return;
     }
+
     setSaving(true);
+
     try {
-      await api.put(`/users/${user.id}`, {
-        name: editName,
-        bio: editBio,
-        cargo: editCargo,
-        stack: editStack,
-        cidade: editCidade,
-        github: editGithub,
-      });
       const updated = {
         ...user,
         name: editName,
@@ -124,55 +141,60 @@ export default function Profile() {
         github: editGithub,
         photo,
       };
+
+      await api.put(`/users/${user.id}`, updated);
       await AsyncStorage.setItem("user", JSON.stringify(updated));
+
       setUser(updated);
       setEditModal(false);
-      Alert.alert("✅ Sucesso", "Perfil atualizado!");
+
+      Alert.alert("Sucesso");
     } catch {
-      Alert.alert("Erro", "Não foi possível atualizar o perfil.");
+      Alert.alert("Erro ao salvar");
     } finally {
       setSaving(false);
     }
   }
-async function handleChangePassword() {
-  if (!currentPassword || !newPassword || !confirmPassword) {
-    Alert.alert("Atenção", "Preencha todos os campos!");
-    return;
-  }
-  if (newPassword !== confirmPassword) {
-    Alert.alert("Atenção", "As senhas não coincidem!");
-    return;
-  }
-  if (newPassword.length < 6) {
-    Alert.alert("Atenção", "A nova senha deve ter pelo menos 6 caracteres!");
-    return;
-  }
-  setSavingPassword(true);
-  try {
-    const response = await fetch(`http://192.168.101.7:3000/users/${user.id}/password`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentPassword, newPassword }),
-    });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      Alert.alert("Erro", data.error || "Erro ao alterar senha.");
+  async function handleChangePassword() {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      Alert.alert("Preencha todos os campos");
       return;
     }
 
-    Alert.alert("✅ Sucesso", "Senha alterada com sucesso!");
-    setPasswordModal(false);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  } catch (error) {
-    Alert.alert("Erro", "Não foi possível conectar ao servidor.");
-  } finally {
-    setSavingPassword(false);
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Senhas não coincidem");
+      return;
+    }
+
+    setSavingPassword(true);
+
+    try {
+      const response = await fetch(
+        `http://192.168.101.7:3000/users/${user.id}/password`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert("Erro", data.error);
+        return;
+      }
+
+      Alert.alert("Senha alterada!");
+      setPasswordModal(false);
+    } catch {
+      Alert.alert("Erro servidor");
+    } finally {
+      setSavingPassword(false);
+    }
   }
-}
+
   async function handleLogout() {
     await AsyncStorage.removeItem("user");
     router.replace("/login");
@@ -180,11 +202,14 @@ async function handleChangePassword() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.title}>Perfil</Text>
-        <TouchableOpacity style={styles.gearBtn} onPress={() => setSettingsModal(true)}>
+
+        <TouchableOpacity
+          style={styles.gearBtn}
+          onPress={() => setSettingsModal(true)}
+        >
           <Ionicons name="settings-outline" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -196,25 +221,20 @@ async function handleChangePassword() {
             <Image source={{ uri: photo }} style={styles.avatarImage} />
           ) : (
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
+              <Text style={styles.avatarText}>
+                {getInitials(user?.name)}
+              </Text>
             </View>
           )}
-          <TouchableOpacity style={styles.cameraBtn} onPress={handlePickImage}>
-            <Ionicons name="camera" size={14} color="#fff" />
-          </TouchableOpacity>
         </View>
 
-        <Text style={styles.name}>{user?.name || "Usuário"}</Text>
-        <Text style={styles.email}>{user?.email || "email@email.com"}</Text>
+        <Text style={styles.name}>{user?.name}</Text>
+        <Text style={styles.email}>{user?.email}</Text>
 
-        {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
-
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>🥉 Dev Iniciante</Text>
-        </View>
-
-        <TouchableOpacity style={styles.editButton} onPress={() => setEditModal(true)}>
-          <Ionicons name="create-outline" size={18} color="#fff" />
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => setEditModal(true)}
+        >
           <Text style={styles.editText}>Editar Perfil</Text>
         </TouchableOpacity>
       </View>
