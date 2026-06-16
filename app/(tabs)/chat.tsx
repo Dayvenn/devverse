@@ -3,15 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { api } from "../../services/api";
+
 export default function Chat() {
   const router = useRouter();
   const [conversations, setConversations] = useState<any[]>([]);
@@ -22,32 +23,37 @@ export default function Chat() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, []),
+    }, [])
   );
 
-  async function loadData() {
-    setLoading(true);
+ async function loadData() {
+  setLoading(true);
+  try {
+    const data = await AsyncStorage.getItem("user");
+    if (!data) return;
+
+    const user = JSON.parse(data);
+    setCurrentUser(user);
 
     try {
-      const data = await AsyncStorage.getItem("user");
-      if (!data) return;
-
-      const user = JSON.parse(data);
-      setCurrentUser(user);
-
-      const [convRes, usersRes] = await Promise.all([
-        api.get(`/conversations/${user.id}`),
-        api.get("/users"),
-      ]);
-
-      setConversations(convRes.data);
+      const usersRes = await api.get("/users");
       setAllUsers(usersRes.data.filter((u: any) => u.id !== user.id));
-    } catch (error) {
-      console.error("Erro ao carregar chats:", error);
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.log("Erro ao buscar usuários:", err);
     }
+
+    try {
+      const convRes = await api.get(`/conversations/${user.id}`);
+      setConversations(convRes.data);
+    } catch (err) {
+      console.log("Erro ao buscar conversas:", err);
+    }
+  } catch (error) {
+    console.error("Erro ao carregar dados do chat:", error);
+  } finally {
+    setLoading(false);
   }
+}
 
   function openChat(otherUser: any) {
     router.push({
@@ -59,104 +65,107 @@ export default function Chat() {
     });
   }
 
-  // Usuários com quem ainda não tem conversa
-  const conversationIds = new Set(conversations.map((c) => c.user.id));
-  const newUsers = allUsers.filter((u) => !conversationIds.has(u.id));
+  function getInitials(name: string) {
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  }
+
+  function formatTime(dateStr: string) {
+    const diff = Math.floor(
+      (new Date().getTime() - new Date(dateStr).getTime()) / 60000
+    );
+    if (diff < 1) return "Agora";
+    if (diff < 60) return `${diff}min`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h`;
+    return `${Math.floor(diff / 1440)}d`;
+  }
 
   if (loading) {
     return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
         <ActivityIndicator size="large" color="#3B82F6" />
       </View>
     );
   }
 
+  // Usuários com quem ainda não há conversa
+  const conversationIds = new Set(conversations.map((c) => c.user.id));
+  const newUsers = allUsers.filter((u) => !conversationIds.has(u.id));
+
+  const isEmpty = conversations.length === 0 && newUsers.length === 0;
+
   return (
     <View style={styles.container}>
+
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.title}>Chats</Text>
         <Ionicons name="chatbubble-ellipses-outline" size={26} color="#fff" />
       </View>
 
-      <FlatList
-        data={conversations}
-        keyExtractor={(item) => item.user.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        ListHeaderComponent={
-          <>
-            {/* CONVERSAS EXISTENTES */}
-            {conversations.length > 0 && (
+      {isEmpty ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="chatbubbles-outline" size={48} color="#1E3A5F" />
+          <Text style={styles.emptyText}>Nenhum dev encontrado</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={conversations}
+          keyExtractor={(item) => item.user.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          ListHeaderComponent={
+            conversations.length > 0 ? (
               <Text style={styles.sectionTitle}>Conversas</Text>
-            )}
-          </>
-        }
-        ListFooterComponent={
-          <>
-            {/* NOVOS USUÁRIOS */}
-            {newUsers.length > 0 && (
+            ) : null
+          }
+          ListFooterComponent={
+            newUsers.length > 0 ? (
               <>
-                <Text style={styles.sectionTitle}>Devs na plataforma</Text>
-                {newUsers.map((user) => (
+                <Text style={[styles.sectionTitle, { marginTop: conversations.length > 0 ? 20 : 0 }]}>
+                  Devs na plataforma
+                </Text>
+                {newUsers.map((item) => (
                   <TouchableOpacity
-                    key={user.id}
+                    key={item.id}
                     style={styles.chatCard}
-                    onPress={() => openChat(user)}
+                    onPress={() => openChat(item)}
+                    activeOpacity={0.8}
                   >
                     <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>
-                        {user.name.charAt(0).toUpperCase()}
-                      </Text>
+                      <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
                     </View>
                     <View style={styles.chatInfo}>
-                      <Text style={styles.user}>{user.name}</Text>
-                      <Text style={styles.message}>Iniciar conversa...</Text>
+                      <Text style={styles.user}>{item.name}</Text>
+                      <Text style={styles.message}>
+                        {item.cargo || "Iniciar conversa..."}
+                      </Text>
                     </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={18}
-                      color="#3B82F6"
-                    />
+                    <Ionicons name="chevron-forward" size={18} color="#3B82F6" />
                   </TouchableOpacity>
                 ))}
               </>
-            )}
-          </>
-        }
-        ListEmptyComponent={
-          conversations.length === 0 && newUsers.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="chatbubbles-outline" size={48} color="#3B82F6" />
-              <Text style={styles.emptyText}>Nenhum dev encontrado</Text>
-            </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.chatCard}
-            onPress={() => openChat(item.user)}
-          >
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {item.user.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.chatInfo}>
-              <Text style={styles.user}>{item.user.name}</Text>
-              <Text style={styles.message} numberOfLines={1}>
-                {item.lastMessage}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#3B82F6" />
-          </TouchableOpacity>
-        )}
-      />
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.chatCard}
+              onPress={() => openChat(item.user)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{getInitials(item.user.name)}</Text>
+              </View>
+              <View style={styles.chatInfo}>
+                <Text style={styles.user}>{item.user.name}</Text>
+                <Text style={styles.message} numberOfLines={1}>
+                  {item.lastMessage}
+                </Text>
+              </View>
+              <Text style={styles.timeText}>{formatTime(item.lastAt)}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -222,6 +231,10 @@ const styles = StyleSheet.create({
   message: {
     color: "#9CA3AF",
     fontSize: 14,
+  },
+  timeText: {
+    color: "#7C8BA1",
+    fontSize: 12,
   },
   emptyContainer: {
     alignItems: "center",

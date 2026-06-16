@@ -249,6 +249,61 @@ app.get("/messages/:userA/:userB", async (req, res) => {
 });
 
 /* =====================
+   CONVERSATIONS
+===================== */
+app.get("/conversations/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+      },
+      include: { sender: true, receiver: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const seen = new Set<string>();
+    const conversations: any[] = [];
+
+    for (const msg of messages) {
+      const otherId = msg.senderId === userId ? msg.receiverId : msg.senderId;
+      if (!seen.has(otherId)) {
+        seen.add(otherId);
+        const other = msg.senderId === userId ? msg.receiver : msg.sender;
+        conversations.push({
+          user: other,
+          lastMessage: msg.content,
+          lastAt: msg.createdAt,
+        });
+      }
+    }
+
+    return res.json(conversations);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar conversas" });
+  }
+});
+
+/* =====================
+   POSTS BY USER (ESTATÍSTICAS)
+===================== */
+app.get("/posts/user/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const posts = await prisma.post.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.json(posts);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar posts do usuário" });
+  }
+}); 
+
+/* =====================
    START SERVER
 ===================== */
 const PORT = Number(process.env.PORT) || 3000;

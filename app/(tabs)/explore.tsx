@@ -31,7 +31,6 @@ export default function Explore() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-
   const [filter, setFilter] = useState<"all" | "posts" | "users">("all");
 
   useEffect(() => {
@@ -46,7 +45,6 @@ export default function Explore() {
 
   async function handleSearch(query?: string) {
     const term = query ?? search;
-
     if (!term.trim()) return;
 
     setLoading(true);
@@ -103,6 +101,16 @@ export default function Explore() {
     return `${Math.floor(diff / 1440)}d atrás`;
   }
 
+  function getInitials(name?: string) {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Explorar</Text>
@@ -117,6 +125,8 @@ export default function Explore() {
           style={styles.input}
           value={search}
           onChangeText={setSearch}
+          onSubmitEditing={() => handleSearch()}
+          returnKeyType="search"
         />
 
         {search.length > 0 && (
@@ -150,7 +160,12 @@ export default function Explore() {
       </View>
 
       {/* TOPICS */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10, paddingBottom: 4 }}
+        style={{ flexGrow: 0, marginBottom: 16 }}
+      >
         {topics.map((topic) => (
           <TouchableOpacity
             key={topic.label}
@@ -191,19 +206,40 @@ export default function Explore() {
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          ListHeaderComponent={
+            <Text style={styles.resultsCount}>
+              {results.length} resultado{results.length !== 1 ? "s" : ""} para "{search}"
+            </Text>
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search-outline" size={40} color="#3B82F6" />
+              <Text style={styles.emptyText}>Nenhum resultado encontrado</Text>
+            </View>
+          }
           renderItem={({ item }) => (
             <View style={styles.resultCard}>
-
-              {/* 🔥 CLIQUE NO USUÁRIO */}
               <TouchableOpacity
+                style={styles.userRow}
                 onPress={() => {
                   if (!item.user?.id) return;
-                 router.push(`/user/${item.user.id}`);;
+                  router.push(`/user/${item.user.id}`);
                 }}
               >
-                <Text style={styles.userName}>
-                  {item.user?.name ?? "Usuário"}
-                </Text>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {getInitials(item.user?.name)}
+                  </Text>
+                </View>
+
+                <View>
+                  <Text style={styles.userName}>
+                    {item.user?.name ?? "Usuário"}
+                  </Text>
+                  <Text style={styles.time}>{formatDate(item.createdAt)}</Text>
+                </View>
               </TouchableOpacity>
 
               <Text style={styles.resultText}>{item.content}</Text>
@@ -246,10 +282,11 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 15,
+    marginBottom: 16,
   },
   filterButton: {
-    padding: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 10,
     backgroundColor: "#12284A",
   },
@@ -258,6 +295,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     color: "#3B82F6",
+    fontWeight: "600",
   },
   filterTextActive: {
     color: "#fff",
@@ -266,9 +304,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#12284A",
-    padding: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 12,
-    marginRight: 10,
     gap: 6,
   },
   tagActive: {
@@ -276,6 +314,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     color: "#3B82F6",
+    fontWeight: "600",
   },
   tagTextActive: {
     color: "#fff",
@@ -284,7 +323,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0C1B36",
     padding: 20,
     borderRadius: 16,
-    marginTop: 20,
+    marginTop: 10,
   },
   cardTitle: {
     color: "#fff",
@@ -294,20 +333,63 @@ const styles = StyleSheet.create({
   cardText: {
     color: "#C7D2FE",
     marginTop: 10,
+    lineHeight: 22,
+  },
+  resultsCount: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 14,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   resultCard: {
     backgroundColor: "#0C1B36",
-    padding: 15,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     marginBottom: 10,
   },
-  userName: {
-    color: "#3B82F6",
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#3B82F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 15,
+  },
+  userName: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  time: {
+    color: "#7C8BA1",
+    fontSize: 12,
+    marginTop: 2,
   },
   resultText: {
     color: "#E5E7EB",
-    marginTop: 5,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    marginTop: 60,
+    gap: 12,
+  },
+  emptyText: {
+    color: "#7C8BA1",
+    fontSize: 16,
   },
 });
