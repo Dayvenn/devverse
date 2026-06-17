@@ -49,51 +49,9 @@ cd devverse-backend
 npm install
 ```
 
-### 5. Configuração da API
-
-Para que o frontend consiga se comunicar com o backend, é necessário alterar a URL da API no arquivo:
-
-```txt
-services/api.ts
-```
-
-Exemplo:
-
-```ts
-baseURL: "http://SEU_IP:3000";
-```
-
-### Como descobrir o IP da máquina
-
-Abra o Prompt de Comando (CMD) e execute:
-
-```bash
-ipconfig
-```
-
-Procure pelo campo **Endereço IPv4** e copie o valor.
-
-Depois, substitua no arquivo da API:
-
-```ts
-baseURL: "http://SEU_IP:3000";
-```
-
-> Observação: o dispositivo que estiver executando o aplicativo deve estar conectado na mesma rede que a máquina onde o backend está rodando.
-
-### 6. Inicie o servidor dentro da devverse-backend
-
-```bash
-npm run dev
-```
-
-> O backend deve permanecer em execução enquanto o aplicativo estiver sendo utilizado.
-
----
-
 ## Frontend
 
-### 7. Abra um novo terminal e inicie o Expo
+### 5. Abra um novo terminal e inicie o Expo
 
 ```bash
 npx expo start
