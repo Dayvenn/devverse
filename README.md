@@ -76,31 +76,31 @@ npx expo start
 
 ## Participação dos Integrantes
 
-### Davidson Lucas
+### Davidson Lucas - Matricula UC24100366
 - Desenvolvimento Backend
 - Estruturação do banco de dados com Prisma e SQLite
 - Criação e integração das APIs
 - Integração entre frontend e backend
 
-### Brunna
+### Brunna - Matricula UC24102765
 - Desenvolvimento Frontend
 - Desenvolvimento do protótipo
 - Construção de telas e componentes
 - Auxílio na implementação das funcionalidades da interface
 
-### Maylon
+### Maylon - Matricula UC24102141
 - Desenvolvimento Frontend
 - Implementação de funcionalidades e ajustes visuais
 - Testes de interface
 - Integração entre frontend e backend
 
-### João
+### João - Matricula UC24102654
 - Desenvolvimento Backend
 - Implementação de funcionalidades
 - Testes e validações do sistema
 - Desenvolvimento do protótipo
 
-### Matheus
+### Matheus - Matricula UC24200084
 - Desenvolvimento Backend
 - Implementação de funcionalidades
 - Testes e validações do sistema
@@ -111,7 +111,11 @@ npx expo start
 - Levantamento de requisitos
 - Testes e validação das funcionalidades
 
-## Repositório e Protótipo
+## Repositório. Protótipo e Aplicação online
+
+## Aplicação Online
+
+https://devverse-2-p4go.onrender.com/login
 
 ### Repositório
 
