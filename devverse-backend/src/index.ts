@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient } from "@prisma/client";
 import cors from "cors";
 import express from "express";
@@ -151,9 +152,8 @@ app.post("/career", async (req, res) => {
   }
 });
 
-/* =====================
-   POSTS
-===================== */
+//POST 
+
 app.post("/posts", async (req, res) => {
   const { userId, content } = req.body;
 
@@ -186,9 +186,8 @@ app.get("/posts", async (req, res) => {
   }
 });
 
-/* =====================
-   LIKE / DELETE / COMMENTS
-===================== */
+// REAÇÃO 
+
 app.post("/posts/:id/like", async (req, res) => {
   const { id } = req.params;
 
@@ -217,9 +216,8 @@ app.post("/posts/:id/comments", async (req, res) => {
   return res.json(comment);
 });
 
-/* =====================
-   MESSAGES
-===================== */
+//MENSAGENS 
+
 app.post("/messages", async (req, res) => {
   const { senderId, receiverId, content } = req.body;
 
@@ -248,9 +246,7 @@ app.get("/messages/:userA/:userB", async (req, res) => {
   return res.json(messages);
 });
 
-/* =====================
-   CONVERSATIONS
-===================== */
+// CONVERSAS 
 app.get("/conversations/:userId", async (req, res) => {
   const { userId } = req.params;
 
@@ -285,9 +281,8 @@ app.get("/conversations/:userId", async (req, res) => {
   }
 });
 
-/* =====================
-   POSTS BY USER (ESTATÍSTICAS)
-===================== */
+// POSTS DO USUÁRIO
+
 app.get("/posts/user/:userId", async (req, res) => {
   const { userId } = req.params;
 
@@ -303,9 +298,8 @@ app.get("/posts/user/:userId", async (req, res) => {
   }
 }); 
 
-/* =====================
-   START SERVER
-===================== */
+// SERV
+
 const PORT = Number(process.env.PORT) || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {

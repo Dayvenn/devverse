@@ -150,7 +150,7 @@ export default function Profile() {
 
       Alert.alert("Sucesso");
     } catch {
-      Alert.alert("Erro ao salvar");
+      Alert.alert("Erro ao salvar!");
     } finally {
       setSaving(false);
     }
@@ -158,7 +158,7 @@ export default function Profile() {
 
   async function handleChangePassword() {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert("Preencha todos os campos");
+      Alert.alert("Preencha todos os campos!");
       return;
     }
 

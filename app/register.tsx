@@ -36,7 +36,7 @@ export default function Register() {
         password: senha,
       });
 
-      alert("Conta criada com sucesso 🚀");
+      alert("Conta criada com sucesso!!");
       router.replace("/login");
     } catch (error: any) {
       if (error.response) {

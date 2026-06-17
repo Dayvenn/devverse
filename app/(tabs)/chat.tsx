@@ -87,7 +87,7 @@ export default function Chat() {
     );
   }
 
-  // Usuários com quem ainda não há conversa
+  // Usuários com quem ainda não conversa
   const conversationIds = new Set(conversations.map((c) => c.user.id));
   const newUsers = allUsers.filter((u) => !conversationIds.has(u.id));
 

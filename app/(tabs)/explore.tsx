@@ -115,7 +115,7 @@ export default function Explore() {
     <View style={styles.container}>
       <Text style={styles.title}>Explorar</Text>
 
-      {/* SEARCH */}
+      {/* BUSCA */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#7C8BA1" />
 
@@ -136,7 +136,7 @@ export default function Explore() {
         )}
       </View>
 
-      {/* FILTERS */}
+      {/* FILTROS */}
       <View style={styles.filterContainer}>
         {["all", "posts", "users"].map((f) => (
           <TouchableOpacity
@@ -159,7 +159,7 @@ export default function Explore() {
         ))}
       </View>
 
-      {/* TOPICS */}
+      {/* TOPIC */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -192,7 +192,7 @@ export default function Explore() {
         ))}
       </ScrollView>
 
-      {/* CONTENT */}
+      {/* CONTEÚDO */}
       {!searched ? (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>🔥 Tecnologia em Alta</Text>
@@ -210,7 +210,7 @@ export default function Explore() {
           contentContainerStyle={{ paddingBottom: 100 }}
           ListHeaderComponent={
             <Text style={styles.resultsCount}>
-              {results.length} resultado{results.length !== 1 ? "s" : ""} para "{search}"
+              {results.length} resultado{results.length !== 1 ? "s" : ""} para &quot;{search}&quot;
             </Text>
           }
           ListEmptyComponent={
@@ -251,7 +251,7 @@ export default function Explore() {
   );
 }
 
-/* STYLES */
+// STYLES
 const styles = StyleSheet.create({
   container: {
     flex: 1,

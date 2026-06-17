@@ -260,7 +260,7 @@ export default function Home() {
         )}
       />
 
-      {/* MODAL COMMENTS */}
+      {/* MODAL COMENTARIOS */}
       <Modal visible={commentModal} transparent animationType="slide">
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -361,7 +361,7 @@ export default function Home() {
   );
 }
 
-/* STYLES */
+// STYLES 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#05152C", paddingHorizontal: 16, paddingTop: 55 },
   loading: { flex: 1, backgroundColor: "#05152C", justifyContent: "center", alignItems: "center" },

@@ -89,7 +89,8 @@ export default function UserProfile() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* PERFIL */}
+      {/* Perfil */}
+
       <View style={styles.card}>
         <View style={styles.avatarWrapper}>
           {user.photo ? (
@@ -111,7 +112,8 @@ export default function UserProfile() {
         </View>
       </View>
 
-      {/* ESTATÍSTICAS */}
+     
+
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{posts.length}</Text>
@@ -123,7 +125,7 @@ export default function UserProfile() {
         </View>
       </View>
 
-      {/* SOBRE */}
+      
       {(user.cargo || user.stack || user.cidade || user.github) ? (
         <View style={styles.infoCard}>
           <Text style={styles.sectionTitle}>Sobre</Text>
