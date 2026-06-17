@@ -124,4 +124,3 @@ https://github.com/Dayvenn/devverse
 ### Protótipo
 
 https://www.figma.com/design/VuAw6WCrYuOaIxyIetoYxv/Prot%C3%B3tipo-Social-Media-Programa%C3%A7%C3%A3o-App?node-id=0-1&t=zmVIkjK5rEb7sEhJ-1
-
