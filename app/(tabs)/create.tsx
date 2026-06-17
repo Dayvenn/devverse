@@ -44,7 +44,7 @@ export default function Create() {
 
       setContent("");
 
-      Alert.alert("Publicado!", "Seu post foi publicado 🚀", [
+      Alert.alert("Publicado!", "Seu post foi publicado!!", [
         {
           text: "OK",
           onPress: () => router.push("/(tabs)/home"),
